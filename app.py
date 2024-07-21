@@ -12,12 +12,10 @@ from PIL import Image, ImageDraw
 import pytesseract
 import io
 import base64
-from docx2pdf import convert
+import pypandoc
 from pptx.enum.shapes import MSO_SHAPE_TYPE
-import pythoncom
-from deep_translator import GoogleTranslator  
+from deep_translator import GoogleTranslator
 from gtts import gTTS  # Google Text-to-Speech
-import base64
 
 def load_cohere_api_key():
     dotenv_path = "cohere.env"
@@ -178,7 +176,6 @@ def answer_question(question, text, co):
 
 class PDF(FPDF):
     def header(self):
-        
         if hasattr(self, 'header_text'):
             self.set_font('DejaVu', '', 14)
             self.cell(0, 10, self.header_text, 0, 1, 'L')
@@ -295,8 +292,7 @@ def display_docx_as_pdf(file):
         temp_docx_file_path = temp_docx_file.name
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf_file:
         temp_pdf_file_path = temp_pdf_file.name
-    pythoncom.CoInitialize()
-    convert(temp_docx_file_path, temp_pdf_file_path)
+    pypandoc.convert_file(temp_docx_file_path, 'pdf', outputfile=temp_pdf_file_path)
     with open(temp_pdf_file_path, "rb") as pdf_file:
         display_pdf(pdf_file)
     os.remove(temp_docx_file_path)
@@ -359,7 +355,7 @@ def main():
 
             if st.session_state.qna_history:
                 st.subheader("Q&A History")
-                for q, a in st.session_state.qna_history[:-1]:  
+                for q, a in st.session_state.qna_history[:-1]:
                     st.write(f"Q: {q}")
                     st.write(f"A: {a}")
 
