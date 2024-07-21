@@ -14,7 +14,6 @@ import io
 import base64
 import pypandoc
 from pptx.enum.shapes import MSO_SHAPE_TYPE
-from gtts import gTTS  # Google Text-to-Speech
 
 def load_cohere_api_key():
     dotenv_path = "cohere.env"
@@ -351,15 +350,6 @@ def main():
                     pdf_link = f'<a href="data:application/octet-stream;base64,{b64_pdf}" download="report.pdf">Download PDF Report</a>'
                     st.markdown(pdf_link, unsafe_allow_html=True)
 
-            if st.button("Text to Speech"):
-                tts = gTTS(text=summary_text, lang='en')
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
-                    tts.save(temp_audio_file.name)
-                    temp_audio_file_path = temp_audio_file.name
-                audio_file = open(temp_audio_file_path, "rb")
-                audio_bytes = audio_file.read()
-                st.audio(audio_bytes, format='audio/mp3')
-                os.remove(temp_audio_file_path)
 
 if __name__ == "__main__":
     main()
