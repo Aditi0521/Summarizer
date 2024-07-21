@@ -14,7 +14,6 @@ import io
 import base64
 import pypandoc
 from pptx.enum.shapes import MSO_SHAPE_TYPE
-from deep_translator import GoogleTranslator
 from gtts import gTTS  # Google Text-to-Speech
 
 def load_cohere_api_key():
@@ -160,11 +159,6 @@ def summarize_text(text, image_descriptions, co):
 
     return structured_summary
 
-def translate_text(text, target_language):
-    translator = GoogleTranslator(source='auto', target=target_language)
-    translation = translator.translate(text)
-    return translation
-
 def answer_question(question, text, co):
     response = co.generate(
         prompt=question + "\n\n" + text,
@@ -190,7 +184,7 @@ class PDF(FPDF):
         self.multi_cell(0, 10, body)
         self.ln()
 
-def generate_pdf_report(summary_text, translated_summary, qna_history):
+def generate_pdf_report(summary_text, qna_history):
     pdf = PDF()
 
     pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
@@ -206,13 +200,6 @@ def generate_pdf_report(summary_text, translated_summary, qna_history):
     pdf.chapter_title("Summary:")
     pdf.chapter_body(summary_text if summary_text else "No summary available.")
 
-    # translated summary
-    if translated_summary and translated_summary != summary_text:
-        pdf.add_page()
-        pdf.header_text = "Translated Summary"
-        pdf.header()
-        pdf.chapter_body(translated_summary)
-
     # Q&A history
     if qna_history:
         pdf.add_page()
@@ -221,7 +208,7 @@ def generate_pdf_report(summary_text, translated_summary, qna_history):
         for qna in qna_history:
             pdf.chapter_body(f"Q: {qna[0]}\nA: {qna[1]}")
 
-    pdf_file_path = 'translated_summary.pdf'
+    pdf_file_path = 'summary_report.pdf'
     pdf.output(pdf_file_path, 'F')
 
     return pdf_file_path
@@ -338,13 +325,6 @@ def main():
             summary_text = summarize_text(text, image_descriptions, co)
             st.subheader("Document Summary")
             st.write(summary_text)
-            target_language = st.selectbox("Select Language for Translation:", ["en", "es", "fr", "de", "it", "hi"])
-            if target_language != "en":
-                translated_summary = translate_text(summary_text, target_language)
-                st.subheader(f"Translated Summary ({target_language}):")
-                st.write(translated_summary)
-            else:
-                translated_summary = summary_text
 
             st.subheader("Ask a Question")
             question = st.text_input("Enter your question:")
@@ -365,7 +345,7 @@ def main():
                 st.write(f"A: {answer}")
 
             if st.button("Download Report"):
-                pdf_file_path = generate_pdf_report(summary_text, translated_summary, st.session_state.qna_history)
+                pdf_file_path = generate_pdf_report(summary_text, st.session_state.qna_history)
                 with open(pdf_file_path, "rb") as pdf_file:
                     b64_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
                     pdf_link = f'<a href="data:application/octet-stream;base64,{b64_pdf}" download="report.pdf">Download PDF Report</a>'
